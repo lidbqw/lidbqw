@@ -1,0 +1,227 @@
+Claro que posso, Lídia 💻🧠 Bora fazer um **passo a passo completão** de como se virar numa **prova prática com Flask + Python + SQLite + login** — como se fosse um tutorial de sobrevivência mesmo, do zero até funcionar. Vou te mostrar **como pensar**, **o que fazer**, **o que não esquecer** e até **como improvisar** se travar.
+
+---
+
+## 📚 **OBJETIVO DA PROVA (exemplo comum):**
+
+> Crie uma aplicação Flask com:
+>
+> * Cadastro de usuários (nome, email, senha)
+> * Login e logout
+> * Página protegida (só acessa logado)
+> * Banco de dados SQLite
+> * HTML básico com formulários
+
+---
+
+## 🚀 **PASSO A PASSO: COMO FAZER A PROVA**
+
+### 1. 🧱 **Setup inicial**
+
+**✔️ Crie os arquivos principais**
+
+```bash
+touch app.py
+mkdir templates
+cd templates
+touch login.html register.html perfil.html
+```
+
+**✔️ Instale o Flask**
+
+```bash
+pip install flask
+```
+
+---
+
+### 2. 🔧 **Crie seu app Flask base**
+
+No `app.py`:
+
+```python
+from flask import Flask, render_template, request, redirect, session
+import sqlite3
+
+app = Flask(__name__)
+app.secret_key = 'segredo-top'
+
+def get_db():
+    return sqlite3.connect('banco.db')
+```
+
+---
+
+### 3. 🧠 **Crie o banco de dados**
+
+Ainda no `app.py`, coloca isso pra rodar uma vez:
+
+```python
+def criar_banco():
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                senha TEXT NOT NULL
+            )
+        ''')
+        conn.commit()
+
+criar_banco()
+```
+
+---
+
+### 4. 📝 **Cadastro de usuário**
+
+Cria a rota `/register`:
+
+```python
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        nome = request.form['nome']
+        email = request.form['email']
+        senha = request.form['senha']
+
+        with get_db() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute('INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)', (nome, email, senha))
+                conn.commit()
+                return redirect('/login')
+            except:
+                return 'Erro ao cadastrar!'
+
+    return render_template('register.html')
+```
+
+🧾 **register.html**
+
+```html
+<form method="post">
+  Nome: <input name="nome"><br>
+  Email: <input name="email"><br>
+  Senha: <input type="password" name="senha"><br>
+  <input type="submit" value="Cadastrar">
+</form>
+```
+
+---
+
+### 5. 🔐 **Login**
+
+```python
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        senha = request.form['senha']
+
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM usuarios WHERE email = ? AND senha = ?', (email, senha))
+            user = cursor.fetchone()
+
+        if user:
+            session['usuario'] = user[1]  # Nome
+            return redirect('/perfil')
+        else:
+            return 'Login inválido!'
+
+    return render_template('login.html')
+```
+
+🧾 **login.html**
+
+```html
+<form method="post">
+  Email: <input name="email"><br>
+  Senha: <input type="password" name="senha"><br>
+  <input type="submit" value="Entrar">
+</form>
+```
+
+---
+
+### 6. 🔐 **Página protegida com sessão**
+
+```python
+@app.route('/perfil')
+def perfil():
+    if 'usuario' in session:
+        return render_template('perfil.html', nome=session['usuario'])
+    return redirect('/login')
+```
+
+🧾 **perfil.html**
+
+```html
+<h1>Bem-vindo, {{ nome }}!</h1>
+<a href="/logout">Sair</a>
+```
+
+---
+
+### 7. ❌ **Logout**
+
+```python
+@app.route('/logout')
+def logout():
+    session.pop('usuario', None)
+    return redirect('/login')
+```
+
+---
+
+### 8. 🧪 **Rodando o app**
+
+No final do `app.py`:
+
+```python
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+E pra rodar:
+
+```bash
+python app.py
+```
+
+Acesse no navegador:
+`http://127.0.0.1:5000/register` → cadastro
+`http://127.0.0.1:5000/login` → login
+`http://127.0.0.1:5000/perfil` → página só pra logado
+
+---
+
+## 📌 DICAS DE PROVA
+
+| Situação                         | O que fazer                                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Erro no SQLite**               | Confere se o banco foi criado, se os campos estão certos, se a senha/email não tá duplicada |
+| **Login não funciona**           | Verifica se a senha e email estão corretos na query                                         |
+| **Não redireciona**              | Confere o `return redirect('/alguma-rota')`                                                 |
+| **Página protegida mostra erro** | Usa `if 'usuario' in session:` sempre                                                       |
+| **Tá tudo quebrando**            | Começa com o app mais simples e vai adicionando aos poucos                                  |
+
+---
+
+## 🧠 O JEITO DE PENSAR NA PROVA
+
+1. Começa com a **estrutura mínima funcionando** (`/`, `/register`, `/login`)
+2. Cria o **banco** no código, ou separadamente
+3. Testa **cadastro e login local**
+4. Adiciona a **sessão** pra proteger páginas
+5. Faz o **HTML simples**, sem frescura
+6. Se sobrar tempo, dá uma enfeitada
+
+---
+
+Quer que eu te monte um **projeto zipado com tudo pronto** ou te passe um **código só pra copiar e colar** direto no VS Code?
+
+Ou prefere que eu te **simule uma prova falsa** agora, como se fosse a de amanhã, pra você treinar? 😏🔥
