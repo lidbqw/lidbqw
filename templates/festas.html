@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Minhas Festas{% endblock %}
+
+{% block conteudo %}
+<h1>Minhas Festas</h1>
+<a href="{{ url_for('nova_festa') }}" class="btn btn-primary">Nova Festa</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Data</th>
+            <th>Local</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for festa in festas %}
+        <tr>
+            <td>{{ festa['nome'] }}</td>
+            <td>{{ festa['data'] }}</td>
+            <td>{{ festa['local'] }}</td>
+            <td>
+                <form action="{{ url_for('remover_festa', festa_id=festa['id']) }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Remover</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4">Nenhuma festa cadastrada</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Nova Festa{% endblock %}
+
+{% block conteudo %}
+<h1>Nova Festa</h1>
+
+<form action="{{ url_for('nova_festa') }}" method="POST">
+    <div class="form-group">
+        <label for="nome">Nome da Festa</label>
+        <input type="text" class="form-control" id="nome" name="nome" required>
+    </div>
+    <div class="form-group">
+        <label for="data">Data</label>
+        <input type="date" class="form-control" id="data" name="data" required>
+    </div>
+    <div class="form-group">
+        <label for="local">Local</label>
+        <input type="text" class="form-control" id="local" name="local" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Salvar</button>
+</form>
+{% endblock %}

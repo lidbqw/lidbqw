@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{url_for('static', filename = 'produto.css')}}">
+    <title>Produtos</title>
+</head>
+<body>
+
+    <h1>Produtos</h1>
+    <ul>
+        {% for produto in produtos %}
+        <li>
+            {{ produto.nome }} - R$ {{ produto.preco }}
+            <a href="{{ url_for('add_carrinho', produto_id=produto.id) }}">Adicionar ao carrinho</a>
+        </li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('ver_carrinho') }}">Ver Carrinho</a> 
+    <a href="{{ url_for('base') }}">Voltar para a página inicial</a>
+
+</body>
+</html>
