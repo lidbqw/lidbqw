@@ -1,0 +1,239 @@
+Perfeito, Lídia! 🧠💻 Bora fazer um compiladão monstro de códigos e explicações que vai te salvar nessa prova. Vou montar uma coletânea de códigos básicos e completos em Flask + SQLite + login, explicando cada parte com carinho. Vai ter:
+
+---
+
+### 🧰 **1. INSTALAÇÃO DO FLASK E DEPENDÊNCIAS**
+
+```bash
+pip install flask
+```
+
+Se for usar SQLite (que já vem com Python), não precisa instalar nada extra. Mas se quiser usar ORM com SQLAlchemy:
+
+```bash
+pip install flask_sqlalchemy
+```
+
+---
+
+### 📁 **2. ESTRUTURA DE PASTA BÁSICA**
+
+```
+projeto/
+├── app.py
+├── templates/
+│   └── login.html
+├── static/
+│   └── estilo.css
+```
+
+---
+
+### 🚀 **3. PRIMEIRO APP FLASK (basezona)**
+
+```python
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return 'Olá, Flask!'
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+---
+
+### 🗂️ **4. CONECTANDO COM SQLITE**
+
+```python
+import sqlite3
+
+def criar_banco():
+    conn = sqlite3.connect('banco.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            senha TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+criar_banco()
+```
+
+---
+
+### 🧠 **5. FLASK COM FORMULÁRIO E SALVANDO DADOS**
+
+```python
+from flask import Flask, render_template, request, redirect
+import sqlite3
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return render_template('form.html')
+
+@app.route('/salvar', methods=['POST'])
+def salvar():
+    nome = request.form['nome']
+    email = request.form['email']
+    senha = request.form['senha']
+
+    conn = sqlite3.connect('banco.db')
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)', (nome, email, senha))
+    conn.commit()
+    conn.close()
+
+    return redirect('/')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+📝 **form.html**
+
+```html
+<form action="/salvar" method="post">
+  Nome: <input type="text" name="nome"><br>
+  Email: <input type="email" name="email"><br>
+  Senha: <input type="password" name="senha"><br>
+  <input type="submit" value="Cadastrar">
+</form>
+```
+
+---
+
+### 🔐 **6. LOGIN SIMPLES (sem sessão ainda)**
+
+```python
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        senha = request.form['senha']
+
+        conn = sqlite3.connect('banco.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM usuarios WHERE email = ? AND senha = ?', (email, senha))
+        usuario = cursor.fetchone()
+        conn.close()
+
+        if usuario:
+            return f'Bem-vindo, {usuario[1]}!'
+        else:
+            return 'Login inválido!'
+
+    return render_template('login.html')
+```
+
+📝 **login.html**
+
+```html
+<form method="post">
+  Email: <input type="email" name="email"><br>
+  Senha: <input type="password" name="senha"><br>
+  <input type="submit" value="Entrar">
+</form>
+```
+
+---
+
+### 🧠🔑 **7. LOGIN COM SESSÃO**
+
+```python
+from flask import Flask, render_template, request, redirect, session
+
+app = Flask(__name__)
+app.secret_key = 'segredo-top'
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        senha = request.form['senha']
+
+        conn = sqlite3.connect('banco.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM usuarios WHERE email = ? AND senha = ?', (email, senha))
+        usuario = cursor.fetchone()
+        conn.close()
+
+        if usuario:
+            session['usuario'] = usuario[1]  # nome
+            return redirect('/perfil')
+        else:
+            return 'Login inválido!'
+    
+    return render_template('login.html')
+
+@app.route('/perfil')
+def perfil():
+    if 'usuario' in session:
+        return f'Bem-vindo ao seu perfil, {session["usuario"]}!'
+    else:
+        return redirect('/login')
+
+@app.route('/logout')
+def logout():
+    session.pop('usuario', None)
+    return redirect('/login')
+```
+
+---
+
+### 🧪 **8. DICA DE COMO TESTAR NO NAVEGADOR**
+
+* Roda com `python app.py`
+* Vai no navegador e acessa:
+  `http://127.0.0.1:5000`
+
+---
+
+### 🧼 **9. LIMPEZA DE CÓDIGO E MELHORIAS**
+
+* Crie funções pra reusar conexões:
+
+```python
+def get_db():
+    return sqlite3.connect('banco.db')
+```
+
+* Use `with` para evitar esquecer de fechar:
+
+```python
+with get_db() as conn:
+    cursor = conn.cursor()
+    ...
+```
+
+---
+
+### 🧱 **10. EXTRA: USANDO SQLALCHEMY (ORM bonitinho)**
+
+```python
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///banco.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+class Usuario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100))
+    email = db.Column(db.String(100), unique=True)
+    senha = db.Column(db.String(100))
+
+with app.app_context():
+    db.create_all()
