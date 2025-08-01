@@ -1,0 +1,13 @@
+Ativar o ambiente:
+py --version
+py -m venv venv
+venv\Scripts\activate
+pip install flask werkzeug
+cd {caminho da pasta}
+py iniciar.py (banco de dados)
+py app.py
+
+Instalar flask login:
+pip install flask_login
+
+Email lys: anonima.lylyamy@gmail.com
