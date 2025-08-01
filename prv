@@ -1,0 +1,229 @@
+Estrutura do Projeto
+Recomenda-se a seguinte estrutura de arquivos para manter o projeto organizado:
+projeto_flask/
+├── app.py
+├── database.py
+├── templates/
+│   ├── index.html
+│   ├── novo_personagem.html
+│   └── personagens.html
+├── static/
+│   └── (arquivos CSS, JS, etc., se necessário)
+└── README.md
+
+1. Modo de Execução e Instalação
+Para rodar este projeto, você precisará ter o Python 3 instalado em sua máquina.
+Pré-requisitos:
+ * Instalar o Flask: O único pacote externo necessário para este projeto é o Flask. Você pode instalá-lo usando o pip, o gerenciador de pacotes do Python.
+   pip install Flask
+
+ * Ativar o Banco de Dados: O SQLite é um banco de dados embutido no Python, então não é necessário instalar nada extra. O arquivo do banco de dados (jogo.db) será criado automaticamente na primeira execução do script database.py.
+Passos para Execução:
+ * Crie a estrutura de diretórios conforme mostrado acima.
+ * Crie os arquivos app.py, database.py e os templates HTML.
+ * Execute o script do banco de dados: Abra o terminal na pasta do projeto e execute o seguinte comando para criar o banco de dados e a tabela.
+   python database.py
+
+   Após a execução, um arquivo chamado jogo.db será criado na raiz do seu projeto.
+ * Execute a aplicação Flask: Agora, inicie a aplicação principal.
+   flask run
+
+   Ou, alternativamente, se você definir a variável de ambiente FLASK_APP e FLASK_ENV:
+   export FLASK_APP=app.py
+export FLASK_ENV=development
+flask run
+
+   A aplicação estará acessível em http://127.0.0.1:5000/.
+2. Implementação do Código
+Requisito 2: Banco de Dados SQLite3
+Vamos criar um arquivo separado (database.py) para gerenciar a criação do banco de dados e da tabela. Isso ajuda a manter o código principal (app.py) mais limpo.
+Arquivo: database.py
+import sqlite3
+
+# Conectar ou criar o banco de dados
+conn = sqlite3.connect('jogo.db')
+cursor = conn.cursor()
+
+# Criar a tabela 'personagens'
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS personagens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL,
+        jogo_origem TEXT NOT NULL,
+        habilidade_principal TEXT NOT NULL
+    )
+''')
+
+# Commit e fechar a conexão
+conn.commit()
+conn.close()
+
+print("Banco de dados 'jogo.db' e tabela 'personagens' criados com sucesso.")
+
+
+Requisitos 1, 3 e 4: Rotas Flask e Lógica da Aplicação
+Agora, vamos implementar as rotas e a lógica da aplicação no arquivo app.py.
+Arquivo: app.py
+from flask import Flask, render_template, request, redirect, url_for
+import sqlite3
+
+app = Flask(__name__)
+
+# Função para conectar ao banco de dados
+def get_db_connection():
+    conn = sqlite3.connect('jogo.db')
+    conn.row_factory = sqlite3.Row  # Isso permite acessar as colunas como um dicionário
+    return conn
+
+# Requisito 1: Rota inicial com links
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+# Requisito 4: Rota para listar todos os personagens
+@app.route('/personagens')
+def listar_personagens():
+    conn = get_db_connection()
+    personagens = conn.execute('SELECT * FROM personagens').fetchall()
+    conn.close()
+    return render_template('personagens.html', personagens=personagens)
+
+# Requisito 3: Rota para exibir o formulário e cadastrar um novo personagem
+@app.route('/personagens/novo', methods=('GET', 'POST'))
+def novo_personagem():
+    if request.method == 'POST':
+        # Ler os dados do formulário
+        nome = request.form['nome']
+        jogo_origem = request.form['jogo_origem']
+        habilidade_principal = request.form['habilidade_principal']
+
+        # Inserir os dados no banco de dados
+        conn = get_db_connection()
+        conn.execute('INSERT INTO personagens (nome, jogo_origem, habilidade_principal) VALUES (?, ?, ?)',
+                     (nome, jogo_origem, habilidade_principal))
+        conn.commit()
+        conn.close()
+
+        # Redirecionar para a página de listagem
+        return redirect(url_for('listar_personagens'))
+
+    # Caso a requisição seja GET, renderiza o formulário
+    return render_template('novo_personagem.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+3. Templates HTML
+Vamos criar os arquivos HTML necessários na pasta templates/.
+Arquivo: templates/index.html
+Este template atende ao requisito 1, fornecendo a página inicial com links.
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Inicial</title>
+</head>
+<body>
+    <h1>Bem-vindo à Avaliação de Flask</h1>
+    <p>Esta é a página inicial da aplicação.</p>
+    <ul>
+        <li><a href="{{ url_for('novo_personagem') }}">Adicionar um novo personagem</a></li>
+        <li><a href="{{ url_for('listar_personagens') }}">Listar todos os personagens cadastrados</a></li>
+    </ul>
+</body>
+</html>
+
+Arquivo: templates/novo_personagem.html
+Este template exibe o formulário de cadastro, conforme o requisito 3.
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Novo Personagem</title>
+</head>
+<body>
+    <h1>Cadastro de Novo Personagem</h1>
+    <form method="post" action="{{ url_for('novo_personagem') }}">
+        <label for="nome">Nome do personagem:</label><br>
+        <input type="text" id="nome" name="nome" required><br><br>
+
+        <label for="jogo_origem">Jogo de origem:</label><br>
+        <input type="text" id="jogo_origem" name="jogo_origem" required><br><br>
+
+        <label for="habilidade_principal">Habilidade principal:</label><br>
+        <input type="text" id="habilidade_principal" name="habilidade_principal" required><br><br>
+
+        <input type="submit" value="Cadastrar">
+    </form>
+    <br>
+    <a href="{{ url_for('listar_personagens') }}">Voltar para a lista de personagens</a>
+</body>
+</html>
+
+Arquivo: templates/personagens.html
+Este template atende ao requisito 4, exibindo a lista de personagens em uma tabela HTML.
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Personagens</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lista de Personagens Cadastrados</h1>
+    <a href="{{ url_for('novo_personagem') }}">Adicionar novo personagem</a>
+    <br><br>
+    {% if personagens %}
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Jogo de Origem</th>
+                <th>Habilidade Principal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for personagem in personagens %}
+            <tr>
+                <td>{{ personagem['nome'] }}</td>
+                <td>{{ personagem['jogo_origem'] }}</td>
+                <td>{{ personagem['habilidade_principal'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Nenhum personagem cadastrado ainda.</p>
+    {% endif %}
+</body>
+</html>
+
+Análise Detalhada dos Pontos da Avaliação
+ * Requisito 1: Rotas Flask
+   * /: Rota inicial implementada na função index(), com links para as outras páginas.
+   * /personagens/novo: Rota para o formulário de cadastro, implementada na função novo_personagem().
+   * /personagens: Rota para listar os personagens, implementada na função listar_personagens().
+ * Requisito 2: Banco de Dados SQLite3
+   * O banco de dados jogo.db é criado e a tabela personagens é definida com os campos id, nome, jogo_origem e habilidade_principal.
+   * O id é definido como INTEGER PRIMARY KEY AUTOINCREMENT para garantir uma chave primária única e autoincrementável.
+   * O script database.py facilita a criação inicial do banco de dados, separando a lógica de configuração do banco da lógica da aplicação.
+ * Requisito 3: Cadastro de Personagens
+   * A rota /personagens/novo suporta os métodos GET e POST.
+   * No método GET, o template novo_personagem.html é renderizado com o formulário.
+   * No método POST, os dados do formulário (request.form) são capturados, validados (pela propriedade required no HTML) e inseridos na tabela personagens via INSERT INTO.
+   * Após a inserção, a aplicação redireciona automaticamente para a rota /personagens usando redirect(url_for('listar_personagens')), conforme solicitado.
+ * Requisito 4: Listagem de Personagens
+   * A rota /personagens lê os dados do banco de dados com a query SELECT * FROM personagens.
+   * Os dados são passados para o template personagens.html.
+   * No template, um laço de repetição ({% for personagem in personagens %}) percorre a lista de personagens e exibe os campos nome, jogo_origem e habilidade_principal em uma tabela HTML.
+Esta solução abrange todos os pontos da avaliação de forma completa, organizada e com código comentado para facilitar o entendimento.
