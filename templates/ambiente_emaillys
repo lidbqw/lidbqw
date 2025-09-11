@@ -1,9 +1,10 @@
 Ativar o ambiente:
 py --version
-py -m venv venv
-venv\Scripts\activate
+py -m venv venv (py -m venv .env)
+venv\Scripts\activate (.\.env\Scripts\activate)
 pip install flask werkzeug
 cd {caminho da pasta}
+flask run --debug
 py iniciar.py (banco de dados)
 py app.py
 
