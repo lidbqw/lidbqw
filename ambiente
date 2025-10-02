@@ -1,0 +1,16 @@
+Ativar o ambiente:
+py --version
+cd {caminho da pasta}
+py -m venv venv
+venv\Scripts\activate
+pip install flask flask_sqlalchemy (e etc)
+pip freeze > requirements.txt (cria o requirements)
+pip install -r requirements.txt (instala tudo dentro do requirements)
+flask run --debug
+py iniciar.py (banco de dados)
+py app.py
+
+Instalar flask login:
+pip install flask_login
+
+Email lys: anonima.lylyamy@gmail.com
